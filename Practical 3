@@ -1,0 +1,209 @@
+# Practical 3 — Cheat Sheet 🪑
+
+Aim: To create a 3D chair model in Blender, import it into Godot 4 using glTF (`.glb`), and implement automatic chair rotation using a GDScript attached to the chair.
+
+This cheat sheet follows your Practical 3 PDF, including the Blender dimensions, Godot scene setup, camera settings, and scripts.&#x20;
+
+3rd_practical.docx.pdf
+
+
+
+## 1. Scene tree — exact structure
+
+Main scene (`ChairScene.tscn`)
+
+```
+ChairScene (Node3D)
+├── Chair (inherited from Chair.tscn)
+├── DirectionalLight3D
+└── Camera3D [Camera.gd]
+```
+
+Chair model scene (`Chair.tscn`)
+
+```
+Chair (Node3D) [chair_rotate.gd]
+├── Cube
+├── Cube.001
+├── Cube.002
+├── Cube.003
+├── Cube.004
+└── Cube.005
+```
+
+The cube children are the individual parts of the chair imported from Blender. Your exact imported child names may differ.
+
+## 2. Blender — chair model
+
+Create the chair using cubes.
+
+| Part     | Operation  | Values |
+| -------- | ---------- | ------ |
+| Seat     | Scale Z    | `0.2`  |
+| Seat     | Scale X    | `1.2`  |
+| Seat     | Scale Y    | `1.2`  |
+| Seat     | Location Z | `1`    |
+| Leg      | Scale X    | `0.1`  |
+| Leg      | Scale Y    | `0.1`  |
+| Leg      | Scale Z    | `1`    |
+| Leg      | Location Z | `0.5`  |
+| Backrest | Scale X    | `1.2`  |
+| Backrest | Scale Y    | `0.1`  |
+| Backrest | Scale Z    | `1.2`  |
+| Backrest | Location Z | `1.8`  |
+| Backrest | Location Y | `0.65` |
+
+For the four legs, position them at the seat corners using duplication (`Shift + D`) and movement along X and Y.
+
+Export: `File → Export → glTF 2.0` and save as `chair.glb`.
+
+## 3. Godot — Inspector values
+
+### ChairScene
+
+| Node / Property               | Value         |
+| ----------------------------- | ------------- |
+| Root node                     | `Node3D`      |
+| Root name                     | `ChairScene`  |
+| DirectionalLight3D Rotation X | `-45°`        |
+| DirectionalLight3D Rotation Y | `30°`         |
+| DirectionalLight3D Rotation Z | `0°`          |
+| Camera3D Position             | `(0, 3, 6)`   |
+| Camera3D Rotation Degrees     | `(-20, 0, 0)` |
+| Camera3D Current / Enabled    | On            |
+
+### Chair node
+
+| Property       | Value                 |
+| -------------- | --------------------- |
+| Position       | `(0, 0, 0)`           |
+| Rotation       | `(0, 0, 0)`           |
+| Scale          | `(1, 1, 1)`           |
+| Rotation speed | `30.0` degrees/second |
+
+## 4. Chair rotation script — `chair_rotate.gd`
+
+Attach this script to the root `Chair` node in `Chair.tscn`.
+
+```
+
+extends Node3D
+
+@export var rotation_speed: float = 30.0
+
+func _process(delta):
+    rotate_y(deg_to_rad(rotation_speed * delta))
+
+```
+
+What it does
+
+| Code                         | Purpose                             |
+| ---------------------------- | ----------------------------------- |
+| `extends Node3D`             | Script works on a 3D node           |
+| `@export var rotation_speed` | Exposes rotation speed in Inspector |
+| `_process(delta)`            | Runs every frame                    |
+| `rotate_y(...)`              | Rotates chair around Y-axis         |
+| `deg_to_rad(...)`            | Converts degrees to radians         |
+
+## 5. Optional — mouse-controlled rotation
+
+Use this instead of the automatic rotation script if your practical requires the user to drag the chair with the mouse. Do not attach both scripts to the same node.
+
+```
+
+extends Node3D
+
+var rotating = false
+var rotation_speed = 1.0
+
+func _input(event):
+    if event is InputEventMouseButton:
+        if event.button_index == MOUSE_BUTTON_LEFT:
+            rotating = event.pressed
+
+func _process(delta):
+    if rotating:
+        rotate_y(rotation_speed * delta)
+
+```
+
+## 6. Optional — orbit camera script
+
+The PDF also provides a script that moves the camera around the chair. Attach it to `Camera3D` and assign the chair to its `target` property in the Inspector.
+
+File: `Camera.gd`
+
+```
+
+extends Camera3D
+
+@export var target: Node3D
+@export var orbit_speed: float = 1.0
+
+var angle: float = 0.0
+var radius: float = 5.0
+var height: float = 2.0
+
+func _process(delta):
+    if target:
+        angle += orbit_speed * delta
+
+        var x = target.global_position.x + radius * cos(angle)
+        var z = target.global_position.z + radius * sin(angle)
+
+        global_position = Vector3(x, height, z)
+        look_at(target.global_position, Vector3.UP)
+
+```
+
+Important: The orbit camera script and the automatic chair rotation script are different things. Use the orbit camera script only if required by your practical.
+
+## 7. Steps to perform in the exam
+
+1. Open Blender and create the chair using cubes: seat, four legs, and backrest.
+2. Export the model as `chair.glb` using glTF 2.0.
+3. Create a Godot project named `RotatingChair`.
+4. Create a `Node3D` root named `ChairScene` and save it as `ChairScene.tscn`.
+5. Add `DirectionalLight3D` and set its rotation to `(-45, 30, 0)` degrees.
+6. Add `Camera3D`, set position `(0, 3, 6)` and rotation `(-20, 0, 0)` degrees.
+7. Import `chair.glb` into Godot, right-click it and select New Inherited Scene. Save as `Chair.tscn`.
+8. Attach `chair_rotate.gd` to the root of the chair scene.
+9. Instantiate `Chair.tscn` inside `ChairScene.tscn` and keep its position `(0, 0, 0)`.
+10. If using the orbit camera, attach `Camera.gd` and assign the chair to `target`.
+11. Save all scenes and set `ChairScene.tscn` as the main scene in Project Settings → Run.
+12. Press `F5` to run the project and check that the chair rotates.
+
+## 8. Final exam checklist
+
+Practical completion
+
+0 of 9
+
+Chair model created in Blender
+
+chair.glb exported successfully
+
+RotatingChair project created
+
+ChairScene.tscn saved
+
+DirectionalLight3D added and configured
+
+Camera3D added and configured
+
+Chair.tscn imported and instantiated
+
+Rotation script attached to Chair
+
+Main scene configured and project runs
+
+## 9. Last-minute memory trick 🧠
+
+- Blender = create the 3D chair.
+- `.glb` = export/import format.
+- `Chair.tscn` = imported chair scene.
+- `ChairScene.tscn` = main scene with chair, camera, and light.
+- `chair_rotate.gd` = rotates the chair.
+- `Camera.gd` = optionally orbits the camera around the chair.
+- `F5` = run the main scene.
