@@ -1,0 +1,147 @@
+# Practical 2 — Cheat Sheet 🎯
+
+Aim: Animate two 3D objects along the same path at different speeds using `Path3D`, `PathFollow3D`, and synchronized audio in Godot.
+
+## 1. Scene tree — exact structure
+
+```
+Main (Node3D)
+└── MyPath (Path3D)
+    ├── Follower1 (PathFollow3D)  [Script 1]
+    │   ├── Sphere (MeshInstance3D)
+    │   └── AudioStreamPlayer3D
+    └── Follower2 (PathFollow3D)  [Script 2]
+        ├── cylinder (MeshInstance3D)
+        └── AudioStreamPlayer3D
+```
+
+Save the scene as `Pract2.tscn`. Attach scripts only to `Follower1` and `Follower2`, not to the mesh nodes.
+
+## 2. Inspector values
+
+### MyPath → Curve
+
+Select `MyPath`, set Curve → New Curve3D, then add five curve points.
+
+| Point | X  | Y | Z  |
+| ----- | -- | - | -- |
+| 0     | 0  | 0 | 0  |
+| 1     | 5  | 2 | 2  |
+| 2     | 9  | 4 | -2 |
+| 3     | 13 | 3 | 1  |
+| 4     | 17 | 0 | 0  |
+
+These are point positions, not rotations. Leave the In/Out handles unchanged.
+
+### Object settings
+
+- `Sphere` → Mesh → New `SphereMesh`
+- `cylinder` → Mesh → New `CylinderMesh`
+- `cylinder` → Position X = `1`, Y = `0`, Z = `0`
+- Both `AudioStreamPlayer3D` nodes → assign the same `move_sound.wav` audio file.
+- If the scene looks grey when running, ensure a `Camera3D` is present and aimed at the path.
+
+## 3. Follower1 script
+
+Select `Follower1` → attach a script → paste this entire code.
+
+```
+
+extends PathFollow3D
+
+@export var normal_speed: float = 2.0
+@export var boost_speed: float = 8.0
+@export var high_speed: float = 12.0
+
+@onready var sound = $AudioStreamPlayer3D
+
+var current_speed: float = 2.0
+
+func _ready() -> void:
+    current_speed = normal_speed
+
+func _input(event: InputEvent) -> void:
+    if event.is_action_pressed("ui_accept"):
+        current_speed = boost_speed
+        sound.play()
+
+    elif event.is_action_released("ui_accept"):
+        current_speed = normal_speed
+
+    if event.is_action_pressed("ui_down"):
+        current_speed = 0.0
+        sound.stop()
+
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+        current_speed = high_speed
+        sound.play()
+
+func _process(delta: float) -> void:
+    progress += current_speed * delta
+
+    if progress_ratio >= 1.0:
+        progress = 0.0
+
+```
+
+## 4. Follower2 script
+
+Select `Follower2` → attach a separate script → paste this entire code.
+
+```
+
+extends PathFollow3D
+
+@export var normal_speed: float = 3.0
+@export var boost_speed: float = 9.0
+@export var high_speed: float = 14.0
+
+@onready var sound = $AudioStreamPlayer3D
+
+var current_speed: float = 3.0
+
+func _ready() -> void:
+    current_speed = normal_speed
+
+func _input(event: InputEvent) -> void:
+    if event.is_action_pressed("ui_accept"):
+        current_speed = boost_speed
+        sound.play()
+
+    elif event.is_action_released("ui_accept"):
+        current_speed = normal_speed
+
+    if event.is_action_pressed("ui_down"):
+        current_speed = 0.0
+        sound.stop()
+
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+        current_speed = high_speed
+        sound.play()
+
+func _process(delta: float) -> void:
+    progress += current_speed * delta
+
+    if progress_ratio >= 1.0:
+        progress = 0.0
+
+```
+
+## 5. Controls for the practical
+
+| Key           | Function                      |
+| ------------- | ----------------------------- |
+| Space / Enter | Boost speed and play audio    |
+| Down arrow    | Stop object and audio         |
+| H             | High-speed movement and audio |
+
+## 6. Final checklist
+
+- Create `Main` → `MyPath` → both `PathFollow3D` nodes.
+- Enter all five Curve3D positions.
+- Add SphereMesh and CylinderMesh to the correct children.
+- Add `AudioStreamPlayer3D` under both followers and assign the same audio file.
+- Attach each script to its corresponding follower.
+- Save the scene and run it.
+
+Remember for the exam: `Path3D` defines the route; `PathFollow3D` moves objects along it; `MeshInstance3D` displays the object; `AudioStreamPlayer3D` plays spatial audio.
