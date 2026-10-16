@@ -1,0 +1,215 @@
+# Practical 5 — Cheat Sheet 🥽
+
+Aim: To implement and simulate floating VR hand motion in a 3D scene using Godot 4 with OpenXR integration. The hands move in a floating pattern, while keyboard controls allow camera movement.&#x20;
+
+## 1. Scene tree — exact structure
+
+Main scene (`main.tscn`)
+
+```
+main (Node3D)  [Main.gd]
+├── floor (MeshInstance3D)
+├── WorldEnvironment
+├── XROrigin3D
+│   ├── XRCamera3D  [Camera.gd]
+│   ├── lefthand (XRController3D)
+│   │   └── MeshInstance3D (CubeMesh)
+│   └── righthand (XRController3D)
+│       └── MeshInstance3D (CubeMesh)
+└── DirectionalLight3D
+```
+
+Save the scene as `main.tscn`.
+
+Attach scripts:
+
+- `Main.gd` → `main (Node3D)`
+- `Camera.gd` → `XRCamera3D`
+
+Important: The node names `XROrigin3D`, `lefthand`, and `righthand` must match the paths in the script exactly.
+
+## 2. Inspector values
+
+### Floor and environment
+
+| Node / Property                | Value                                            |
+| ------------------------------ | ------------------------------------------------ |
+| Root node                      | `Node3D`                                         |
+| Floor node                     | `MeshInstance3D`                                 |
+| Floor → Mesh                   | `New PlaneMesh`                                  |
+| Floor scale                    | `(10, 1, 10)` as a suggested visible size        |
+| WorldEnvironment → Environment | `New Environment`                                |
+| Environment → Sky              | `New ProceduralSkyMaterial`                      |
+| DirectionalLight3D             | Add under `main`; rotate to illuminate the scene |
+
+The floor scale is a suggested value; your practical PDF only says to scale the plane up so it is visible.
+
+### VR origin and hands
+
+| Node / Property       | Value                          |
+| --------------------- | ------------------------------ |
+| `XROrigin3D`          | Under `main`                   |
+| Camera node           | `XRCamera3D`                   |
+| Left hand             | `lefthand` (`XRController3D`)  |
+| Right hand            | `righthand` (`XRController3D`) |
+| Hand mesh             | `MeshInstance3D`               |
+| Mesh resource         | `New CubeMesh`                 |
+| Alternative hand mesh | `SphereMesh`                   |
+
+Use the same type of mesh for both hands. The PDF permits cubes or spheres as placeholders. No specific hand mesh dimensions are prescribed.
+
+## 3. Main.gd — floating hand movement
+
+Attach to `main (Node3D)`.
+
+The following is the exam-ready code from the practical, with the floating movement and node references.
+
+```
+
+extends Node3D
+
+var time := 0.0
+
+@onready var left_hand = $XROrigin3D/lefthand
+@onready var right_hand = $XROrigin3D/righthand
+
+func _process(delta):
+    time += delta
+
+    var move_amplitude = 1.5
+    var float_amplitude = 0.2
+
+    # Left hand moves left to right
+    left_hand.position.x = -move_amplitude * cos(time)
+
+    # Right hand moves in the opposite direction
+    right_hand.position.x = move_amplitude * cos(time)
+
+    # Up-down floating movement
+    left_hand.position.y = 1.0 + sin(time * 2.0) * float_amplitude
+    right_hand.position.y = 1.0 + cos(time * 2.0) * float_amplitude
+
+    # Forward-backward movement
+    left_hand.position.z = -1.0 + sin(time * 1.5) * 0.3
+    right_hand.position.z = -1.0 + cos(time * 1.5) * 0.3
+
+func _ready():
+    print("Left:", left_hand)
+    print("Right:", right_hand)
+
+```
+
+### Optional: hands that approach each other
+
+If you want the modified version we discussed, with circular-like movement and hands that approach and separate, replace `Main.gd` with this version instead.
+
+```
+
+extends Node3D
+
+var time := 0.0
+
+@onready var left_hand = $XROrigin3D/lefthand
+@onready var right_hand = $XROrigin3D/righthand
+
+func _ready():
+    left_hand.position = Vector3(-1.2, 1.2, -1.0)
+    right_hand.position = Vector3(1.2, 1.2, -1.0)
+
+func _process(delta):
+    time += delta
+
+    var radius_x = 0.8
+    var radius_y = 0.3
+    var distance = 1.0 + abs(sin(time * 0.5)) * 0.5
+
+    # Left hand
+    left_hand.position.x = -distance + radius_x * cos(time)
+    left_hand.position.y = 1.2 + radius_y * sin(time * 1.5)
+    left_hand.position.z = -1.0 + 0.3 * sin(time)
+
+    # Right hand
+    right_hand.position.x = distance + radius_x * cos(time + PI)
+    right_hand.position.y = 1.2 + radius_y * sin(time * 1.5 + PI)
+    right_hand.position.z = -1.0 + 0.3 * sin(time + PI)
+
+```
+
+Exam note: Use the first script if your examiner expects the code printed in the PDF. The second script is an optional modification, not the original practical code. Neither script guarantees collision avoidance for arbitrarily sized meshes.
+
+## 4. Camera.gd — keyboard camera movement
+
+Attach to `XRCamera3D`.
+
+```
+
+extends XRCamera3D
+
+@export var speed := 2.0
+@export var rotation_speed := 0.02
+
+func _process(delta):
+    # Forward and backward
+    if Input.is_action_pressed("ui_up"):
+        translate(Vector3(0, 0, -speed * delta))
+
+    if Input.is_action_pressed("ui_down"):
+        translate(Vector3(0, 0, speed * delta))
+
+    # Left and right rotation
+    if Input.is_action_pressed("ui_left"):
+        rotate_y(rotation_speed)
+
+    if Input.is_action_pressed("ui_right"):
+        rotate_y(-rotation_speed)
+
+```
+
+This follows the camera script in your practical PDF.&#x20;
+
+## 5. What each node does
+
+| Node                 | Purpose                             |
+| -------------------- | ----------------------------------- |
+| `Node3D`             | Root node; organizes the scene      |
+| `MeshInstance3D`     | Displays the hand or floor mesh     |
+| `PlaneMesh`          | Creates the visible floor           |
+| `WorldEnvironment`   | Controls the environment and sky    |
+| `XROrigin3D`         | Parent origin for VR tracking nodes |
+| `XRCamera3D`         | VR camera                           |
+| `XRController3D`     | Represents a VR controller          |
+| `DirectionalLight3D` | Lights the scene                    |
+
+Remember: Mesh = appearance; XRController3D = hand/controller node; XRCamera3D = VR view; `Main.gd` = floating motion; `Camera.gd` = keyboard movement.
+
+## 6. Controls
+
+| Key / Action             | Function             |
+| ------------------------ | -------------------- |
+| Up arrow (`ui_up`)       | Move camera forward  |
+| Down arrow (`ui_down`)   | Move camera backward |
+| Left arrow (`ui_left`)   | Rotate camera left   |
+| Right arrow (`ui_right`) | Rotate camera right  |
+| F5                       | Run the project      |
+
+These keyboard controls use Godot's built-in input actions.
+
+## 7. Final checklist
+
+- Create a new 3D scene and select the Mobile renderer.
+- Rename the root node to `main`.
+- Add `floor` with a `PlaneMesh` and scale it up.
+- Add `WorldEnvironment` and configure the sky if desired.
+- Add `XROrigin3D`.
+- Add `XRCamera3D` under the origin.
+- Add `lefthand` and `righthand` as `XRController3D` nodes.
+- Add a `MeshInstance3D` under each hand and assign a `CubeMesh` or `SphereMesh`.
+- Add `DirectionalLight3D` under `main`.
+- Attach `Main.gd` to `main`.
+- Attach `Camera.gd` to `XRCamera3D`.
+- Save the scene and press F5.
+- Verify that both hand meshes move in a floating pattern.
+
+The steps and original scripts are based on your uploaded Practical 5 PDF.&#x20;
+
+Exam memory trick: `main = root`, `XROrigin3D = VR origin`, `XRCamera3D = camera`, `XRController3D = hands`, `Main.gd = floating motion`, `Camera.gd = keyboard movement`.
