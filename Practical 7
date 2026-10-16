@@ -1,0 +1,172 @@
+# Practical 7 — Cheat Sheet 🎯
+
+Aim: To create a 3D interactive scene in Godot 4 where two spheres move and rotate continuously and randomly change their colours upon collision, using `Area3D`, collision detection, and dynamic materials.
+
+## 1. Scene tree — exact structure
+
+Main scene (`Main.tscn`)
+
+```
+Main (Node3D)
+├── Ground (MeshInstance3D)
+├── Sphere1 (Area3D)  [Sphere.gd]
+│   ├── CollisionShape3D (SphereShape3D)
+│   └── MeshInstance3D (SphereMesh)
+└── Sphere2 (Area3D)  [Sphere.gd]
+    ├── CollisionShape3D (SphereShape3D)
+    └── MeshInstance3D (SphereMesh)
+```
+
+Save the scene as `Main.tscn`.
+
+Attach scripts:
+
+- `Sphere.gd` → `Sphere1 (Area3D)`
+- `Sphere.gd` → `Sphere2 (Area3D)`
+
+Important: Both spheres must have the same child names because the script uses `$MeshInstance3D` and `get_node_or_null("MeshInstance3D")`.
+
+## 2. Inspector values
+
+### Ground
+
+| Node / Property | Value             |
+| --------------- | ----------------- |
+| Root node       | `Node3D`          |
+| Ground          | `MeshInstance3D`  |
+| Ground → Mesh   | `New BoxMesh`     |
+| Ground → Scale  | `(10, 0.5, 10)`   |
+| Ground material | Any simple colour |
+
+### Sphere1 and Sphere2
+
+| Node / Property  | Sphere1            | Sphere2            |
+| ---------------- | ------------------ | ------------------ |
+| Parent node      | `Area3D`           | `Area3D`           |
+| Position         | `(0, 1, 0)`        | `(2, 1, 0)`        |
+| Collision child  | `CollisionShape3D` | `CollisionShape3D` |
+| Collision Shape  | `SphereShape3D`    | `SphereShape3D`    |
+| Collision radius | `0.5`              | `0.5`              |
+| Mesh child       | `MeshInstance3D`   | `MeshInstance3D`   |
+| Mesh resource    | `SphereMesh`       | `SphereMesh`       |
+| Mesh radius      | `0.5`              | `0.5`              |
+| Monitoring       | `On`               | `On`               |
+
+The `Area3D` nodes detect when the spheres enter each other's collision areas.
+
+## 3. Sphere.gd — complete script
+
+Attach this same script to both spheres.
+
+```
+
+extends Area3D
+
+@onready var mesh = $MeshInstance3D
+
+var velocity = Vector3.ZERO
+
+func _ready():
+    randomize()
+
+    velocity = Vector3(
+        randf_range(-1, 1),
+        0,
+        randf_range(-1, 1)
+    ).normalized() * 2
+
+    area_entered.connect(_on_area_entered)
+
+
+func _physics_process(delta):
+    position += velocity * delta
+    rotate_y(1.5 * delta)
+
+    if abs(position.x) > 5:
+        velocity.x *= -1
+
+    if abs(position.z) > 5:
+        velocity.z *= -1
+
+
+func _on_area_entered(area: Area3D):
+    change_color()
+
+    var other_mesh = area.get_node_or_null("MeshInstance3D")
+
+    if other_mesh:
+        var material = StandardMaterial3D.new()
+        material.albedo_color = Color.from_hsv(randf(), 1, 1)
+        other_mesh.material_override = material
+
+
+func change_color():
+    var material = StandardMaterial3D.new()
+    material.albedo_color = Color.from_hsv(randf(), 1, 1)
+    mesh.material_override = material
+
+```
+
+### What the code does
+
+| Code                                  | Purpose                                                   |
+| ------------------------------------- | --------------------------------------------------------- |
+| `extends Area3D`                      | Makes the script work with an area node                   |
+| `@onready var mesh = $MeshInstance3D` | Gets the sphere's visible mesh                            |
+| `velocity`                            | Stores movement direction and speed                       |
+| `_ready()`                            | Assigns random movement and connects the collision signal |
+| `_physics_process(delta)`             | Moves and rotates the sphere                              |
+| `area_entered`                        | Detects another area entering                             |
+| `change_color()`                      | Changes the sphere's material colour                      |
+| `Color.from_hsv(randf(), 1, 1)`       | Generates a random hue                                    |
+| `material_override`                   | Applies the new material to the mesh                      |
+
+## 4. Movement and rotation values
+
+| Variable / Expression   | Value       | Meaning              |
+| ----------------------- | ----------- | -------------------- |
+| `randf_range(-1, 1)`    | `-1` to `1` | Random X/Z direction |
+| `* 2`                   | `2`         | Movement speed       |
+| `rotate_y(1.5 * delta)` | `1.5`       | Rotation speed       |
+| `abs(position.x) > 5`   | `5`         | X boundary check     |
+| `abs(position.z) > 5`   | `5`         | Z boundary check     |
+| `randf()`               | `0` to `1`  | Random colour hue    |
+
+## 5. Steps to perform in the exam
+
+1. Create a new project named `CollisionColorChange`.
+2. Create a `Node3D` root and rename it `Main`.
+3. Add `Ground` using `MeshInstance3D` and `BoxMesh`.
+4. Set Ground scale to `(10, 0.5, 10)`.
+5. Add `Sphere1` as an `Area3D`.
+6. Add `CollisionShape3D` and `MeshInstance3D` inside Sphere1.
+7. Set both sphere radii to `0.5`.
+8. Duplicate Sphere1 using `Ctrl + D` and rename it `Sphere2`.
+9. Set Sphere1 position to `(0, 1, 0)` and Sphere2 to `(2, 1, 0)`.
+10. Attach `Sphere.gd` to both spheres.
+11. Save the scene as `Main.tscn`.
+12. Press `F6` to run the current scene, or `F5` if the main scene is configured.
+
+## 6. Final checklist
+
+Main scene and Ground created
+
+Both Area3D spheres created
+
+Both collision shapes set to SphereShape3D, radius 0.5
+
+Both visible meshes set to SphereMesh, radius 0.5
+
+Correct positions assigned
+
+Same Sphere.gd attached to both spheres
+
+Area3D Monitoring enabled
+
+Scene saved and run
+
+0 of 8 completed
+
+Exam memory trick: `Area3D = collision detection`, `CollisionShape3D = collision boundary`, `MeshInstance3D = visible sphere`, `Sphere.gd = movement + rotation + random colour`.
+
+Note: This follows the structure and values in your Practical 7 PDF. The script above uses `randf_range()` for random movement and `position` boundary checks; these are implementation details for the movement behaviour.
