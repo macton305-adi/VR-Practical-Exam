@@ -1,0 +1,244 @@
+Bhai, ye lo GP Practical 6 aur Practical 7 ki complete cheatsheet — same simple style mein, text format mein, steps aur poora code ke saath. Exam ke time isi se revise karna. 👇
+
+# GP Practical 6: Player Setup and Vertical Movement in 2D Endless Runner
+
+Aim: To create a player in a 2D Endless Runner game using Unity and implement vertical movement using keyboard input.
+
+## Step 1: Open Project
+
+- Unity Hub → apna existing Unity project open karo.
+- 2D scene use karo.
+- Scene ko save karo (`Ctrl + S`).
+
+## Step 2: Import 2D Assets
+
+- Background, submarine aur obstacle PNG images download karo.
+- Unity → `Assets` par right-click → Create → Folder → `Sprites`.
+- Images ko `Sprites` folder mein drag-and-drop karo.
+- Image ko Scene mein drag karke use karo.
+
+## Step 3: Create Background
+
+- Background sprite ko Scene mein drag karo.
+- Hierarchy mein naam `ocean_background_0` rakho.
+- Inspector → Sprite Renderer → `Order in Layer = -1`.
+
+## Step 4: Create Player
+
+- Submarine sprite ko Scene mein drag karo.
+- Rename: `submarine_0`.
+- Inspector mein components add karo:
+  - `Rigidbody 2D`
+  - `Box Collider 2D`
+- Rigidbody 2D settings:
+  - Body Type = `Dynamic`
+  - Gravity Scale = `0`
+- Sprite Renderer → Order in Layer = `2`.
+
+## Step 5: Create PlayerController Script
+
+- Assets → Right-click → Create → C# Script.
+- Name: `PlayerController`.
+- Script open karo, `Ctrl + A` dabao aur poora code replace karo:
+
+```
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+
+    void Update()
+    {
+        float vertical = Input.GetAxis("Vertical");
+
+        transform.Translate(
+            Vector2.up * vertical * moveSpeed * Time.deltaTime
+        );
+    }
+}
+```
+
+- `Ctrl + S` se save karo.
+- Script ko `submarine_0` par drag karo.
+
+## Step 6: Configure Input
+
+Agar keyboard movement kaam nahi kar raha:
+
+`Edit → Project Settings → Player → Other Settings → Active Input Handling`
+
+- `Both` select karo.
+- Unity restart maange toh restart karo.
+
+## Step 7: Test Player
+
+- Play button dabao.
+- Game tab mein click karo.
+- `W` / `S` ya Up / Down Arrow keys dabao.
+- Submarine upar-neeche move honi chahiye.
+
+Expected Output: Submarine keyboard input se vertically move karegi.
+
+# GP Practical 7: Obstacle System for 2D Endless Runner
+
+Aim: To create an obstacle system in Unity in which obstacles continuously spawn from the right side, move towards the left, appear at different heights, and are destroyed after leaving the screen.
+
+## Step 1: Use the Same Project
+
+- Practical 6 wala project open karo.
+- Background aur `submarine_0` ko rehne do.
+- Naya project banane ki zaroorat nahi.
+
+## Step 2: Create Obstacle
+
+- Obstacle sprite ko Scene mein drag karo.
+- Rename: `obstacle_0`.
+- Inspector → Add Component → `Box Collider 2D`.
+- `Is Trigger = OFF`.
+
+## Step 3: Create Obstacle Prefab
+
+- Hierarchy se `obstacle_0` ko Project window ke `Assets/Sprites` folder mein drag karo.
+- Prefab create ho jayega.
+- Hierarchy wala obstacle delete kar do.
+
+## Step 4: Create ObstacleMovement Script
+
+- Assets → Right-click → Create → C# Script.
+- Name: `ObstacleMovement`.
+- Open karo, `Ctrl + A` dabao aur poora code paste karo:
+
+```
+using UnityEngine;
+
+public class ObstacleMovement : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+
+    void Update()
+    {
+        transform.Translate(
+            Vector2.left * moveSpeed * Time.deltaTime
+        );
+
+        if (transform.position.x < -12f)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.name.Contains("submarine"))
+        {
+            Destroy(gameObject);
+        }
+    }
+}
+```
+
+- `Ctrl + S` dabao.
+- Unity mein wapas aao.
+- `ObstacleMovement` script ko obstacle prefab par drag karo.
+
+## Step 5: Create ObstacleSpawner
+
+- Hierarchy → Right-click → `Create Empty`.
+- Rename: `ObstacleSpawner`.
+- Inspector → Transform → Position:
+  - X = `10`
+  - Y = `0`
+  - Z = `0`
+
+## Step 6: Create ObstacleSpawner Script
+
+- Assets → Right-click → Create → C# Script.
+- Name: `ObstacleSpawner`.
+- Code replace karo:
+
+```
+using UnityEngine;
+
+public class ObstacleSpawner : MonoBehaviour
+{
+    public GameObject obstaclePrefab;
+    public float spawnTime = 2f;
+
+    public float minY = -2f;
+    public float maxY = 2f;
+
+    void Start()
+    {
+        InvokeRepeating("SpawnObstacle", 1f, spawnTime);
+    }
+
+    void SpawnObstacle()
+    {
+        float randomY = Random.Range(minY, maxY);
+
+        Vector3 spawnPosition = new Vector3(
+            transform.position.x,
+            randomY,
+            0
+        );
+
+        Instantiate(obstaclePrefab, spawnPosition, Quaternion.identity);
+    }
+}
+```
+
+- `Ctrl + S` dabao.
+- Unity mein wapas aao.
+- Script ko Hierarchy ke `ObstacleSpawner` object par drag karo.
+
+## Step 7: Assign Obstacle Prefab
+
+1. Hierarchy mein `ObstacleSpawner` select karo.
+2. Inspector mein `Obstacle Prefab` field dhoondo.
+3. Project → `Assets/Sprites` se obstacle prefab ko us field mein drag karo.
+4. `Obstacle Prefab` field mein `None` nahi rehna chahiye.
+
+## Step 8: Check Player and Obstacle
+
+Player (`submarine_0`):
+
+- `Rigidbody 2D` attached.
+- `Box Collider 2D` attached.
+- `Gravity Scale = 0`.
+- `Freeze Rotation Z` enabled.
+
+Obstacle prefab:
+
+- `Box Collider 2D` attached.
+- `Is Trigger = OFF`.
+- `ObstacleMovement` script attached.
+
+## Step 9: Test the Game
+
+1. `Ctrl + S` se scene save karo.
+2. Play button dabao.
+3. Submarine ko W/S ya arrow keys se move karo.
+4. Obstacles right side se spawn hone chahiye.
+5. Obstacles left side move karne chahiye.
+6. Screen se bahar jaane par destroy hone chahiye.
+7. Submarine se takrane par obstacle destroy hona chahiye.
+
+Important: Agar collision par obstacle destroy nahi hota, toh check karo ki player aur obstacle dono par `Rigidbody 2D` aur `Box Collider 2D` sahi tarah configured hain.
+
+## Quick Revision: Important Concepts
+
+| Practical   | Important concept                                     |
+| ----------- | ----------------------------------------------------- |
+| Practical 6 | `Input.GetAxis("Vertical")` — vertical keyboard input |
+| Practical 6 | `transform.Translate()` — player movement             |
+| Practical 6 | `Rigidbody 2D` — 2D physics                           |
+| Practical 6 | `Gravity Scale = 0` — automatic falling rokta hai     |
+| Practical 7 | `InvokeRepeating()` — repeated spawning               |
+| Practical 7 | `Random.Range()` — random Y-coordinate                |
+| Practical 7 | `Instantiate()` — obstacle create karta hai           |
+| Practical 7 | `Vector2.left` — obstacle ko left move karta hai      |
+| Practical 7 | `Destroy(gameObject)` — obstacle destroy karta hai    |
+| Practical 7 | `Box Collider 2D` — collision detection               |
+
+Exam tip: Script names, exact code, Inspector settings aur prefab assignment sabse important hain. Practical 6 player movement hai; Practical 7 usi game mein obstacle spawning aur movement add karta hai.
