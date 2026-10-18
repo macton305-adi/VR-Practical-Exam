@@ -1,1 +1,151 @@
+Bhai, ye lo Practical 3 ki complete cheatsheet text mein. Exam ke time isi ko revise karna. 👇
 
+# GP Practical 3: Rolling Ball Game with Camera Follow
+
+Aim: To create a 3D Rolling Ball Game in Unity using C#, where the player controls a rolling ball with the keyboard and the camera follows the ball.
+
+## Step 1: Create Project
+
+- Open Unity Hub → New Project → 3D Core.
+- Project open karo.
+- Scene ko `MainScene` naam se save karo.
+
+## Step 2: Create Ground
+
+- Hierarchy → Right-click → 3D Object → Plane.
+- Rename it `Ground`.
+
+## Step 3: Create Player
+
+- Hierarchy → Right-click → 3D Object → Sphere.
+- Rename it `Player`.
+- Position set karo:
+  - X = 0
+  - Y = 1
+  - Z = 0
+
+## Step 4: Add Rigidbody
+
+- Player select karo.
+- Inspector → Add Component → Rigidbody.
+
+## Step 5: Create PlayerController Script
+
+- Assets → Right-click → Create → C# Script.
+- Name: `PlayerController`.
+- Script open karo, `Ctrl + A` press karo, aur ye code paste karo.
+
+```
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float speed = 10f;
+    private Rigidbody rb;
+
+    void Start()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    void FixedUpdate()
+    {
+        float moveHorizontal = Input.GetAxis("Horizontal");
+        float moveVertical = Input.GetAxis("Vertical");
+
+        Vector3 movement = new Vector3(
+            moveHorizontal, 0f, moveVertical
+        );
+
+        rb.AddForce(movement * speed);
+    }
+}
+```
+
+- `Ctrl + S` se save karo.
+- Script ko drag karke Player par drop karo.
+
+## Step 6: Configure Input
+
+Unity mein:
+
+`Edit → Project Settings → Player → Other Settings`
+
+- Active Input Handling = Both
+- Restart maange toh restart karo.
+
+## Step 7: Create CameraFollow Script
+
+- Assets → Right-click → Create → C# Script.
+- Name: `CameraFollow`.
+- Open karo, purana code replace karke ye paste karo.
+
+```
+using UnityEngine;
+
+public class CameraFollow : MonoBehaviour
+{
+    public Transform player;
+    private Vector3 offset;
+
+    void Start()
+    {
+        offset = transform.position - player.position;
+    }
+
+    void LateUpdate()
+    {
+        transform.position = player.position + offset;
+    }
+}
+```
+
+- `Ctrl + S` se save karo.
+- Script ko drag karke Main Camera par drop karo.
+
+## Step 8: Assign Player to Camera
+
+1. Hierarchy mein `Main Camera` select karo.
+2. Inspector mein `Camera Follow (Script)` find karo.
+3. Uske `Player` field mein Hierarchy se Player drag karo.
+4. Field mein `Player` dikhna chahiye, `None` nahi.
+
+## Step 9: Add Materials
+
+Ball ka color:
+
+- Assets → Right-click → Create → Material.
+- Name: `BallMaterial`.
+- Base Map/Base Color mein red select karo.
+- Material ko Player par drag karo.
+
+Ground ka color:
+
+- Assets → Right-click → Create → Material.
+- Name: `GroundMaterial`.
+- Base Map/Base Color mein green select karo.
+- Material ko Ground par drag karo.
+
+## Step 10: Run the Game
+
+- Scene save karo: `Ctrl + S`.
+- Play button dabao.
+- Game window mein click karke controls test karo.
+
+| Key | Movement |
+| --- | -------- |
+| W   | Forward  |
+| A   | Left     |
+| S   | Backward |
+| D   | Right    |
+
+Expected output: Ball green Plane par roll karega, aur camera ball ko follow karega.
+
+## Quick Troubleshooting
+
+- Ball ground se gir raha hai: Ground ka Mesh Collider aur Player ka Sphere Collider enabled check karo.
+- Keys kaam nahi kar rahi: Active Input Handling = Both check karo.
+- Camera follow nahi kar raha: CameraFollow script Main Camera par attached ho aur Player field assigned ho.
+- Ball plane ke edge se girta hai: Normal hai. Camera usko follow karega jab tak Player scene mein hai.
+
+Exam tip: Sabse important hai dono script ke exact names, code, Rigidbody, input settings, aur Camera ke Player field ko assign karna.
