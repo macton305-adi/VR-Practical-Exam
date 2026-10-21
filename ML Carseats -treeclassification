@@ -1,0 +1,34 @@
+
+install.packages("ISLR")
+library(ISLR)
+
+install.packages("tree")
+library(tree)
+
+data(Carseats)
+str(Carseats)
+
+range <- ifelse(Carseats$Sales > 8, "High", "Low")
+Carseats$High <- as.factor(range)
+
+head(Carseats)
+
+set.seed(55)
+
+train <- sample(1:nrow(Carseats), 0.7 * nrow(Carseats))
+
+train_data <- Carseats[train, ]
+test_data <- Carseats[-train, ]
+
+tree_model <- tree(High ~ . - Sales, data = train_data)
+
+summary(tree_model)
+
+plot(tree_model)
+text(tree_model, pretty = 0)
+
+tree_pred <- predict(tree_model, test_data, type = "class")
+
+table(Predicted = tree_pred, Actual = test_data$High)
+
+mean(tree_pred == test_data$High)
