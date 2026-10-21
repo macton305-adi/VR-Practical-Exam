@@ -1,0 +1,35 @@
+
+library(MASS)
+
+data <- read.csv("C:/Users/santo/Downloads/data_banknote_authentication.csv", header = FALSE)
+
+names(data) <- c("variance", "skewness", "curtosis", "entropy", "class")
+
+data$class <- as.factor(data$class)
+
+str(data)
+names(data)
+
+set.seed(123)
+index <- sample(1:nrow(data), 0.6 * nrow(data))
+train <- data[index, ]
+test <- data[-index, ]
+
+lda_model <- lda(class ~ ., data = train)
+
+lda_pred <- predict(lda_model, newdata = test)
+
+names(lda_pred)
+
+predicted <- lda_pred$class
+
+confusion_matrix <- table(
+  Predicted = predicted,
+  Actual = test$class
+)
+
+print(confusion_matrix)
+
+accuracy <- mean(predicted == test$class)
+
+print(accuracy)
