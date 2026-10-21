@@ -1,0 +1,46 @@
+
+# Practical 6: Heart Disease using Linear SVM
+
+library(e1071)
+library(ggplot2)
+
+# 1. Load dataset
+heart <- read.csv(file.choose())
+heart <- na.omit(heart)
+head(heart)
+# Remove ID column
+heart$X <- NULL
+
+# Set target column
+heart$AHD <- as.factor(heart$AHD)
+
+# 2. Split data
+set.seed(71)
+train <- sample(1:nrow(heart), 0.7 * nrow(heart))
+
+train_data <- heart[train, ]
+test_data <- heart[-train, ]
+
+# 3. Train Linear SVM
+svm_model <- svm(AHD ~ ., data = train_data,
+                 kernel = "linear", scale = TRUE)
+
+# 4. Predict
+pred <- predict(svm_model, test_data)
+
+# 5. Confusion matrix and accuracy
+cm <- table(Actual = test_data$AHD,
+            Predicted = pred)
+
+print(cm)
+print(mean(pred == test_data$AHD))
+
+# 6. Heatmap
+df <- as.data.frame(cm)
+
+ggplot(df, aes(x = Predicted, y = Actual, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), size = 6) +
+  labs(title = "Heart Disease Confusion Matrix",
+       x = "Predicted", y = "Actual") +
+  theme_minimal()
