@@ -1,0 +1,22 @@
+
+student <- read.csv(file.choose(), sep = ";")
+
+str(student)
+head(student)
+
+set.seed(84)
+
+train <- sample(1:nrow(student), 0.6 * nrow(student))
+train_data <- student[train, ]
+test_data  <- student[-train, ]
+
+
+lm_model <- lm(G3 ~ ., data = train_data)
+
+
+lm_pred <- predict(lm_model, newdata = test_data)
+
+
+lm_mse <- mean((test_data$G3 - lm_pred)^2)
+
+print(lm_mse)
